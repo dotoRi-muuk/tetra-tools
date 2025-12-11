@@ -141,6 +141,16 @@
         <div class="label">Initial field</div>
         <div style="grid-row: span 2;">
             <div id="initial">
+                <input type="checkbox" id="cell50"> <input type="checkbox" id="cell51">
+                <input type="checkbox" id="cell52"> <input type="checkbox" id="cell53">
+                <input type="checkbox" id="cell54"> <input type="checkbox" id="cell55">
+                <input type="checkbox" id="cell56"> <input type="checkbox" id="cell57">
+                <input type="checkbox" id="cell58"> <input type="checkbox" id="cell59">
+                <input type="checkbox" id="cell40"> <input type="checkbox" id="cell41">
+                <input type="checkbox" id="cell42"> <input type="checkbox" id="cell43">
+                <input type="checkbox" id="cell44"> <input type="checkbox" id="cell45">
+                <input type="checkbox" id="cell46"> <input type="checkbox" id="cell47">
+                <input type="checkbox" id="cell48"> <input type="checkbox" id="cell49">
                 <input type="checkbox" id="cell30"> <input type="checkbox" id="cell31">
                 <input type="checkbox" id="cell32"> <input type="checkbox" id="cell33">
                 <input type="checkbox" id="cell34"> <input type="checkbox" id="cell35">
@@ -305,7 +315,7 @@
             let garbage = 0n;
             let garbageCount = 0;
 
-            for (let i = 0n; i < 40n; i++) {
+            for (let i = 0n; i < 60n; i++) {
                 if (document.getElementById("cell" + i).checked) {
                     garbage |= 1n << i;
                     garbageCount += 1;
@@ -316,7 +326,7 @@
         }
 
         function setGarbage(garbage) {
-            for (let i = 0n; i < 40n; i++) {
+            for (let i = 0n; i < 60n; i++) {
                 let cell = document.getElementById("cell" + i);
                 let isChecked = (garbage & (1n << i)) != 0n;
                 cell.checked = isChecked;
@@ -359,7 +369,7 @@
 
             let [garbage, garbageCount] = getGarbage();
 
-            if (garbageCount + pieceCount * 4 > 44) {
+            if (garbageCount + pieceCount * 4 > 64) {
                 queueErrors.innerText = `too many pieces in queue (${pieceCount} total)`;
                 return;
             }
@@ -396,7 +406,7 @@
 
         let dragState = null;
 
-        for (let i = 0; i < 40; i++) {
+        for (let i = 0; i < 60; i++) {
             let cell = document.getElementById("cell" + i);
 
             cell.addEventListener("input", (ev) => doSolve());
