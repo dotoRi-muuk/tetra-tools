@@ -1,0 +1,14 @@
+{
+  "name": "gomen",
+  "collaborators": [
+    "wirelyre"
+  ],
+  "version": "0.3.1",
+  "files": [
+    "gomen_bg.wasm",
+    "gomen.js",
+    "gomen.d.ts"
+  ],
+  "browser": "gomen.js",
+  "types": "gomen.d.ts"
+}
