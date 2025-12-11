@@ -6,8 +6,8 @@
 /// Bit 1 represents the cell immediately to the right. After bit 9, bit 10
 /// wraps around to the leftmost cell one row upwards.
 ///
-/// Although 64 bits are usable, valid boards only ever have the bottom 40 bits
-/// set.  The top 24 bits are always clear.
+/// Although 64 bits are usable, valid boards only ever have the bottom 60 bits
+/// set.  The top 4 bits are always clear.
 ///
 /// This type is `Copy` because it is intended to be cheap to use.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -20,8 +20,8 @@ pub struct Board(pub u64);
 /// from typical coordinates, which often have space to the left or bottom in
 /// certain orientations.
 ///
-/// `row` can be larger than 3; this means that the piece is beyond the top of
-/// the bottom four rows of the board.
+/// `row` can be larger than 5; this means that the piece is beyond the top of
+/// the bottom six rows of the board.
 ///
 /// This type is `Copy` because it is intended to be cheap to use.  This means
 /// that all methods produce *new* pieces.  Methods which take and return values
@@ -140,12 +140,12 @@ impl Board {
 
     /// Check whether the cell at the given row and column is set.
     ///
-    /// Requires that 0 &le; `col` &le; 9 and 0 &le; `row` &le; 3.
+    /// Requires that 0 &le; `col` &le; 9 and 0 &le; `row` &le; 5.
     pub fn get(self, row: i8, col: i8) -> bool {
         assert!(col >= 0);
         assert!(col <= 9);
         assert!(row >= 0);
-        assert!(row <= 3);
+        assert!(row <= 5);
 
         let mask = 1 << (row * 10 + col);
         (self.0 & mask) != 0
@@ -173,28 +173,30 @@ impl Board {
         // These are 10-bit vectors, where each bit represents a column.
         // (The top bits of `not_empty` are garbage, but this is fixed later.)
 
-        let full = (self.0 >> 30) & (self.0 >> 20) & (self.0 >> 10) & (self.0 >> 0);
-        let not_empty = (self.0 >> 30) | (self.0 >> 20) | (self.0 >> 10) | (self.0 >> 0);
+        let full = (self.0 >> 50) & (self.0 >> 40) & (self.0 >> 30) & (self.0 >> 20) & (self.0 >> 10) & (self.0 >> 0);
+        let not_empty = (self.0 >> 50) | (self.0 >> 40) | (self.0 >> 30) | (self.0 >> 20) | (self.0 >> 10) | (self.0 >> 0);
 
         let bounded = {
             // A cell is left-bounded if the cell one bit down is full,
             //   or if it's on the left edge.
             // Bits wrap around the edge, but they are always on after the "or" anyway.
-            // (Bit 40 is garbage, but this is fixed shortly.)
+            // (Bit 60 is garbage, but this is fixed shortly.)
 
-            let left_bounded = (self.0 << 1) | 0b0000000001_0000000001_0000000001_0000000001;
-            let right_bounded = (self.0 >> 1) | 0b1000000000_1000000000_1000000000_1000000000;
+            let left_bounded = (self.0 << 1) | 0b0000000001_0000000001_0000000001_0000000001_0000000001_0000000001;
+            let right_bounded = (self.0 >> 1) | 0b1000000000_1000000000_1000000000_1000000000_1000000000_1000000000;
 
             // Is each cell either full, or both left- and right-bounded?
-            // Bit 40 of `right_bounded` is 0, so bits 40-63 of the result are
+            // Bit 60 of `right_bounded` is 0, so bits 60-63 of the result are
             //   correctly clear.
 
             let bounded_cells = (left_bounded & right_bounded) | self.0;
 
             // Combine boundedness into a 10-bit vector.
             // Bits 10-63 of the result will be clear
-            //   because bits 10-63 of `(bounded_cells >> 30)` are clear.
-            (bounded_cells >> 30)
+            //   because bits 10-63 of `(bounded_cells >> 50)` are clear.
+            (bounded_cells >> 50)
+                & (bounded_cells >> 40)
+                & (bounded_cells >> 30)
                 & (bounded_cells >> 20)
                 & (bounded_cells >> 10)
                 & (bounded_cells >> 0)
@@ -238,7 +240,7 @@ impl Board {
     ///
     /// [`has_isolated_cell`]: Board::has_isolated_cell
     pub fn has_imbalanced_split(self) -> bool {
-        const COL_0: u64 = 0b1_0000000001_0000000001_0000000001;
+        const COL_0: u64 = 0b1_0000000001_0000000001_0000000001_0000000001_0000000001;
         const COL_1: u64 = COL_0 << 1;
         const COL_2: u64 = COL_0 << 2;
         const COL_3: u64 = COL_0 << 3;
@@ -301,15 +303,15 @@ impl Board {
 impl Piece {
     /// Create a new piece of the given shape.
     ///
-    /// The new piece spawns just above the 4&times;10 board, on the left side.
-    /// Since valid [boards] only use the bottom 40 bits, this new piece is valid in every board.
+    /// The new piece spawns just above the 6&times;10 board, on the left side.
+    /// Since valid [boards] only use the bottom 60 bits, this new piece is valid in every board.
     ///
     /// [boards]: Board
     pub fn new(shape: Shape) -> Piece {
         Piece {
             shape,
             col: 0,
-            row: 4,
+            row: 6,
             orientation: Orientation::North,
         }
     }
@@ -370,7 +372,7 @@ impl Piece {
     /// the board.
     ///
     /// In order to make sure that the board is valid, only minoes in the bottom
-    /// four rows are kept.  Other minoes are cut off.
+    /// six rows are kept.  Other minoes are cut off.
     ///
     /// This is not the same as [placing] a piece into an empty board!  Placing
     /// a piece requires that the piece is resting on a filled cell or the
@@ -383,7 +385,7 @@ impl Piece {
     }
 
     /// Convert a piece into a bit board.  Exactly like [`as_board`], except
-    /// without cutting off minoes above the four bottom rows.
+    /// without cutting off minoes above the six bottom rows.
     ///
     /// This is used internally when we either don't care about the upper bits,
     /// or when we actually *want* to look at the upper bits, like in
@@ -406,7 +408,7 @@ impl Piece {
     /// The piece must be:
     ///
     /// 1. Fully in bounds
-    /// 2. Fully in the bottom four rows
+    /// 2. Fully in the bottom six rows
     /// 3. Resting on a filled cell or the bottom of the board
     pub fn can_place(self, board: Board) -> bool {
         let bits = self.as_bits();
@@ -438,8 +440,8 @@ impl Piece {
         let mut complete_lines = 0;
         let mut complete_lines_shift = 0;
 
-        for _ in 0..4 {
-            let this_line = (unordered_board >> 30) & 0b1111111111;
+        for _ in 0..6 {
+            let this_line = (unordered_board >> 50) & 0b1111111111;
             unordered_board <<= 10;
 
             if this_line == 0b1111111111 {
@@ -696,10 +698,10 @@ static KICKS: [&[[(i8, i8); 5]; 4]; 7] = [
     &JLSTZ_KICKS, /* Z */
 ];
 
-/// Bit mask for the bottom four rows (bottom 40 bits) of the game [board].
+/// Bit mask for the bottom six rows (bottom 60 bits) of the game [board].
 ///
 /// [board]: Board
-const BOARD_MASK: u64 = 0b1111111111_1111111111_1111111111_1111111111;
+const BOARD_MASK: u64 = 0b1111111111_1111111111_1111111111_1111111111_1111111111_1111111111;
 
 impl Shape {
     /// Select a single bit according to a shape.

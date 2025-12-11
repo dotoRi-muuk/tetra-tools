@@ -220,7 +220,7 @@ pub fn compute(
 
     let piece_count = bags.iter().map(|b| b.count as usize).sum();
     let new_mino_count = piece_count as u32 * 4;
-    let place_last = start.board.0.count_ones() + new_mino_count <= 40;
+    let place_last = start.board.0.count_ones() + new_mino_count <= 60;
 
     let scanned = scan(
         legal_boards,
@@ -257,7 +257,7 @@ pub fn print(board: &BrokenBoard, to: &mut String) {
         .collect();
     let bits = board.to_broken_bitboard();
 
-    for row in (0..4).rev() {
+    for row in (0..6).rev() {
         'cell: for col in 0..10 {
             for &(shape, board) in &pieces {
                 if board.get(row, col) {
