@@ -1,4 +1,4 @@
-//! Vector implementation of 4-line [SRS](https://harddrop.com/wiki/SRS) and two
+//! Vector implementation of 6-line [SRS](https://harddrop.com/wiki/SRS) and two
 //! half-rotation extensions.  Computes all piece placements in parallel.
 //!
 //! The core item is [`Placements`], which performs the search when
@@ -76,7 +76,7 @@
 //! keep track using this method --- all possible positions are considered
 //! equal.
 //!
-//! Even though this method is possible to adapt for boards larger than 4 lines,
+//! Even though this method is possible to adapt for boards larger than 6 lines,
 //! doing so is even trickier than writing this module.  And this module was
 //! pretty tricky already.  It's very difficult to check whether code like this
 //! is working the way you expect.

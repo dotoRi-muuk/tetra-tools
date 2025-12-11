@@ -63,7 +63,7 @@ impl BrokenBoard {
         let mut complete_lines = 0;
         let mut complete_lines_shift = 0;
 
-        for row in (0..4).rev() {
+        for row in (0..6).rev() {
             let this_line = (garbage >> (row * 10)) & 0b1111111111;
 
             if this_line == 0b1111111111 {
@@ -87,7 +87,7 @@ impl BrokenBoard {
         let mut old = self.board.0;
         let mut new = 0;
 
-        for row in (0..4).rev() {
+        for row in (0..6).rev() {
             let full = (self.cleared_rows & (1 << row)) != 0;
 
             let new_row = if full {
@@ -119,7 +119,7 @@ impl BrokenBoard {
         let mut row_mask = 0b1111111111;
         let mut rows = 0;
 
-        for row in 0..=3 {
+        for row in 0..=5 {
             let row_bit = 1 << row;
 
             if self.cleared_rows & row_bit != 0 {
@@ -153,7 +153,7 @@ impl BrokenBoard {
         let mut bv = BitVec::new();
 
         // magic number, leaves room for larger boards in the future
-        let max_rows: u8 = 4;
+        let max_rows: u8 = 6;
         bv.extend_from_bitslice(max_rows.view_bits::<Lsb0>());
 
         // board
@@ -161,44 +161,46 @@ impl BrokenBoard {
         let low = self.board.0 as u32;
         let high = (self.board.0 >> 32) as u32;
         bv.extend_from_bitslice(low.view_bits::<Lsb0>());
-        bv.extend_from_bitslice(&high.view_bits::<Lsb0>()[..8]);
+        bv.extend_from_bitslice(&high.view_bits::<Lsb0>()[..28]);
 
         // cleared rows
-        bv.extend_from_bitslice(&self.cleared_rows.view_bits::<Lsb0>()[..4]);
+        bv.extend_from_bitslice(&self.cleared_rows.view_bits::<Lsb0>()[..6]);
 
         // pieces
         for piece in &self.pieces {
-            bv.extend_from_bitslice(&piece.low_mino.view_bits::<Lsb0>()[..6]); // low_mino < 40
+            bv.extend_from_bitslice(&piece.low_mino.view_bits::<Lsb0>()[..6]); // low_mino < 60
             bv.extend_from_bitslice(&(piece.shape as u8).view_bits::<Lsb0>()[..3]); // 7 shapes
             bv.extend_from_bitslice(&(piece.orientation as u8).view_bits::<Lsb0>()[..2]); // 4 orientations
-            bv.extend_from_bitslice(&piece.rows.view_bits::<Lsb0>()[..4]); // 4 rows
+            bv.extend_from_bitslice(&piece.rows.view_bits::<Lsb0>()[..6]); // 6 rows
         }
 
         bv
     }
 
     pub fn decode(mut encoded: &BitSlice) -> Option<Self> {
-        if encoded.len() < 52 || encoded.len() > 202 {
+        // Min: 8 (magic) + 60 (board) + 6 (cleared_rows) = 74 bits
+        // Max: 74 + 10 pieces * 17 bits/piece = 244 bits (rounded to 254 for safety)
+        if encoded.len() < 74 || encoded.len() > 254 {
             return None;
         }
 
         let mut new = BrokenBoard::empty();
 
-        if encoded[..8].load_le::<u8>() != 4 {
+        if encoded[..8].load_le::<u8>() != 6 {
             // wrong magic
             return None;
         }
         encoded = &encoded[8..];
 
-        new.board = Board(encoded[..40].load_le());
-        encoded = &encoded[40..];
+        new.board = Board(encoded[..60].load_le());
+        encoded = &encoded[60..];
 
-        new.cleared_rows = encoded[..4].load_le();
-        encoded = &encoded[4..];
+        new.cleared_rows = encoded[..6].load_le();
+        encoded = &encoded[6..];
 
         while encoded.len() != 0 {
-            if encoded.len() < 15 {
-                // not long enough for a piece
+            // Each piece needs 17 bits: 6 (low_mino) + 3 (shape) + 2 (orientation) + 6 (rows)
+            if encoded.len() < 17 {
                 return None;
             }
 
@@ -206,10 +208,10 @@ impl BrokenBoard {
                 low_mino: encoded[..6].load_le(),
                 shape: Shape::try_from(encoded[6..9].load_le())?,
                 orientation: Orientation::try_from(encoded[9..11].load_le())?,
-                rows: encoded[11..15].load_le(),
+                rows: encoded[11..17].load_le(),
             });
 
-            encoded = &encoded[15..];
+            encoded = &encoded[17..];
         }
 
         if new.is_valid() {
@@ -226,7 +228,7 @@ impl BrokenBoard {
         }
 
         // cleared row count is correct
-        let full_line_count = (0..4)
+        let full_line_count = (0..6)
             .map(|i| 0b1111111111 << (10 * i))
             .take_while(|&row| self.board.0 & row == row)
             .count() as u32;
@@ -367,7 +369,7 @@ impl BrokenPiece {
 
         let mut broken = 0;
 
-        for row in 0..=3 {
+        for row in 0..=5 {
             if (1 << row) & self.rows != 0 {
                 broken |= (0b1111111111 & connected) << (row * 10);
                 connected >>= 10;

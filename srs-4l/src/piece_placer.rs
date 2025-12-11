@@ -19,13 +19,13 @@ impl PiecePlacer {
         // these pieces anyway.
         //
         // Note that every `piece` here is valid on the board.  They spawn at
-        // row 4, above the maximum allowed filled cells.
+        // row 6, above the maximum allowed filled cells.
         for orientation in [North, East, South, West] {
             for col in 0..10 {
                 let piece = Piece {
                     shape,
                     col,
-                    row: 4,
+                    row: 6,
                     orientation,
                 };
                 if piece.in_bounds() {
