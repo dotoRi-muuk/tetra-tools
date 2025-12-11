@@ -8,14 +8,9 @@ function progress(piece_count, stage, board_idx, board_total) {
 }
 
 async function main() {
-    let legal_boards;
-
-    let response = await fetch("./legal-boards.leb128");
-    if (response.ok) {
-        legal_boards = new Uint8Array(await response.arrayBuffer());
-    } else {
-        console.log("couldn't load legal boards");
-    }
+    // Legal boards are no longer required - solver always runs in "slow" mode
+    // This supports 6-line boards which don't have pre-computed legal boards data
+    let legal_boards = undefined;
 
     await wasm_bindgen("./pkg/gomen_bg.wasm");
     let solver = new wasm_bindgen.Solver(legal_boards);
@@ -26,6 +21,8 @@ async function main() {
     onmessage = message => {
         let query = message.data;
 
+        // Note: is_fast() will always return false since legal_boards is empty
+        // This message is kept for UI compatibility
         if (solver.is_fast(query.garbage)) {
             postMessage({ kind: "fast", query });
         } else {

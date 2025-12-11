@@ -39,11 +39,8 @@ impl Solver {
 
         let start = BrokenBoard::from_garbage(garbage);
 
-        let legal_boards = if self.is_fast(garbage) {
-            &self.boards
-        } else {
-            &empty_boards
-        };
+        // Always use empty_boards to force "slow" mode for 6-line board support
+        let legal_boards = &empty_boards;
 
         let physics = match physics.as_ref() {
             "SRS" => Physics::SRS,
