@@ -788,7 +788,7 @@ impl Collision {
         Collision {
             shifts,
             mask: replicate_row(row_mask),
-            placeable_shift: 24 + 10 * max_row,
+            placeable_shift: 4 + 10 * max_row,
         }
     }
 
