@@ -701,7 +701,7 @@ static KICKS: [&[[(i8, i8); 5]; 4]; 7] = [
 /// Bit mask for the bottom six rows (bottom 60 bits) of the game [board].
 ///
 /// [board]: Board
-const BOARD_MASK: u64 = 0b1111111111_1111111111_1111111111_1111111111_1111111111_1111111111;
+const BOARD_MASK: u64 = (1u64 << 60) - 1;
 
 impl Shape {
     /// Select a single bit according to a shape.

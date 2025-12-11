@@ -175,6 +175,7 @@ pub fn decode_fumen(encoded: &str) -> String {
         let fumen = Fumen::decode(encoded).ok()?;
         let page: &Page = fumen.pages.get(0)?;
 
+        // Check that rows 6 and above (23 total rows - 6 = 17 rows) are empty
         if page.field[6..] != [[CellColor::Empty; 10]; 17]
             || page.garbage_row != [CellColor::Empty; 10]
         {

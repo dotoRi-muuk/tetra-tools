@@ -178,6 +178,8 @@ impl BrokenBoard {
     }
 
     pub fn decode(mut encoded: &BitSlice) -> Option<Self> {
+        // Min: 8 (magic) + 60 (board) + 6 (cleared_rows) = 74 bits
+        // Max: 74 + 10 pieces * 17 bits/piece = 244 bits (rounded to 254 for safety)
         if encoded.len() < 74 || encoded.len() > 254 {
             return None;
         }
@@ -197,8 +199,8 @@ impl BrokenBoard {
         encoded = &encoded[6..];
 
         while encoded.len() != 0 {
+            // Each piece needs 17 bits: 6 (low_mino) + 3 (shape) + 2 (orientation) + 6 (rows)
             if encoded.len() < 17 {
-                // not long enough for a piece
                 return None;
             }
 
