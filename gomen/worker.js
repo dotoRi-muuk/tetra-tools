@@ -21,6 +21,8 @@ async function main() {
     onmessage = message => {
         let query = message.data;
 
+        // Note: is_fast() will always return false since legal_boards is empty
+        // This message is kept for UI compatibility
         if (solver.is_fast(query.garbage)) {
             postMessage({ kind: "fast", query });
         } else {
